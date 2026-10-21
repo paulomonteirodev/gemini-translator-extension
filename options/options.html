@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Tradutor Gemini – Configurações</title>
+  <link rel="stylesheet" href="../shared/ui.css">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main>
+    <h1>Tradutor Gemini</h1>
+    <p class="muted">Cada pessoa usa a sua própria chave de API do Gemini.</p>
+
+    <section class="card">
+      <h2>1. Crie sua chave gratuita</h2>
+      <ol>
+        <li>Acesse o <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> e entre com sua conta Google.</li>
+        <li>Clique em <strong>Create API key</strong> (Criar chave de API).</li>
+        <li>Copie a chave e cole abaixo.</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <h2>2. Cadastre a chave</h2>
+      <label for="api-key">Chave de API do Gemini</label>
+      <div class="row">
+        <input id="api-key" type="password" autocomplete="off" spellcheck="false" placeholder="Cole sua chave aqui">
+        <button id="toggle-key" type="button">Mostrar</button>
+      </div>
+      <div class="row buttons">
+        <button id="save" class="primary">Salvar e testar</button>
+        <button id="remove">Remover chave</button>
+      </div>
+      <p id="key-status" class="status"></p>
+
+      <div id="model-field" hidden>
+        <label for="model">Modelo</label>
+        <select id="model"></select>
+        <p class="muted">Modelos “Flash” são rápidos e têm limites gratuitos maiores. Recomendado para tradução.</p>
+      </div>
+    </section>
+
+    <section class="card muted">
+      <h2>Privacidade</h2>
+      <p>A chave fica salva apenas neste navegador e só é enviada para a API do Google
+        (<code>generativelanguage.googleapis.com</code>). Ela nunca é compartilhada com os sites que você traduz.</p>
+      <p>No plano gratuito, o Google pode usar o texto enviado para melhorar os produtos dele.
+        Evite traduzir páginas com informações sensíveis.</p>
+    </section>
+  </main>
+
+  <script type="module" src="options.js"></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Tradutor Gemini",
+  "version": "1.0.0",
+  "description": "Traduz a aba atual com o Gemini usando a sua própria chave de API.",
+  "permissions": ["activeTab", "scripting", "storage", "contextMenus"],
+  "host_permissions": ["https://generativelanguage.googleapis.com/*"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Tradutor Gemini",
+    "default_popup": "popup/popup.html"
+  },
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  },
+  "commands": {
+    "translate-page": {
+      "suggested_key": { "default": "Alt+Shift+T" },
+      "description": "Traduzir a página atual"
+    }
+  }
+}

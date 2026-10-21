@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Tradutor Gemini</title>
+  <link rel="stylesheet" href="../shared/ui.css">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <h1>Tradutor Gemini</h1>
+
+  <section id="setup" hidden>
+    <p>Para usar a extensão, cadastre a sua própria chave de API do Gemini (é gratuita).</p>
+    <button id="open-options" class="primary">Cadastrar minha chave</button>
+  </section>
+
+  <section id="main" hidden>
+    <label for="lang">Traduzir para</label>
+    <select id="lang"></select>
+    <div class="buttons">
+      <button id="translate" class="primary">Traduzir esta página</button>
+      <button id="restore">Mostrar original</button>
+    </div>
+    <p class="muted">Dica: selecione um texto e use o botão direito → “Traduzir seleção com Gemini”.</p>
+  </section>
+
+  <p id="status" class="status"></p>
+  <a href="#" id="settings" class="muted">Configurações</a>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

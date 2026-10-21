@@ -1,0 +1,10 @@
+# Sistema / editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Pacotes gerados para publicar na Chrome Web Store
+*.zip
+*.crx
+*.pem
