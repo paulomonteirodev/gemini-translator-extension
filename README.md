@@ -1,4 +1,4 @@
-# Tradutor Gemini (extensão para Chrome)
+# Tradutor com IA – para Gemini (extensão para Chrome)
 
 Traduz a aba atual (ou um texto selecionado) usando o Gemini. Cada pessoa usa a **sua própria chave de API**, que fica salva só no navegador dela.
 
