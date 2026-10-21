@@ -1,4 +1,4 @@
-import { listModels, pickModel } from '../shared/gemini.js';
+import { listUsableModels, pickModel } from '../shared/gemini.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -14,14 +14,16 @@ function showModels(models, selected) {
   $('model-field').hidden = models.length === 0;
 }
 
-// Valida a chave listando os modelos disponíveis para ela.
+// Valida a chave e guarda os modelos que ela realmente consegue usar. O teste gasta uma
+// requisição por modelo, por isso só roda ao salvar e não toda vez que a página abre.
 async function validate(apiKey) {
-  const models = await listModels(apiKey);
-  if (models.length === 0) throw new Error('Nenhum modelo de texto disponível para esta chave.');
+  setStatus('Verificando quais modelos a sua chave pode usar…');
+  const models = await listUsableModels(apiKey);
+  if (models.length === 0) throw new Error('Nenhum modelo do Gemini está disponível para esta chave.');
   const { model: current } = await chrome.storage.local.get('model');
   const model = pickModel(models, current);
   showModels(models, model);
-  return model;
+  await chrome.storage.local.set({ apiKey, models, model });
 }
 
 async function save() {
@@ -31,10 +33,8 @@ async function save() {
     return;
   }
   $('save').disabled = true;
-  setStatus('Testando a chave…');
   try {
-    const model = await validate(apiKey);
-    await chrome.storage.local.set({ apiKey, model });
+    await validate(apiKey);
     setStatus('Chave válida e salva! Já pode traduzir pelo ícone da extensão.', 'ok');
   } catch (err) {
     setStatus(err.message, 'error');
@@ -44,14 +44,14 @@ async function save() {
 }
 
 async function remove() {
-  await chrome.storage.local.remove(['apiKey', 'model']);
+  await chrome.storage.local.remove(['apiKey', 'models', 'model']);
   $('api-key').value = '';
   $('model-field').hidden = true;
   setStatus('Chave removida deste navegador.');
 }
 
 async function init() {
-  const { apiKey } = await chrome.storage.local.get('apiKey');
+  const { apiKey, models, model } = await chrome.storage.local.get(['apiKey', 'models', 'model']);
 
   $('save').addEventListener('click', save);
   $('api-key').addEventListener('keydown', (event) => event.key === 'Enter' && save());
@@ -65,6 +65,11 @@ async function init() {
 
   if (!apiKey) return;
   $('api-key').value = apiKey;
+  if (models?.length) {
+    showModels(models, model);
+    setStatus('Chave configurada. Clique em “Salvar e testar” para atualizar a lista de modelos.', 'ok');
+    return;
+  }
   try {
     await validate(apiKey);
     setStatus('Chave configurada.', 'ok');

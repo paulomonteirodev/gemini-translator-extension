@@ -167,7 +167,7 @@
     currentRun = null;
 
     if (fatal) {
-      const action = fatal.code === 'NO_KEY' || fatal.code === 'INVALID_KEY' || fatal.code === 'MODEL_NOT_FOUND'
+      const action = ['NO_KEY', 'INVALID_KEY', 'MODEL_NOT_FOUND', 'NO_QUOTA'].includes(fatal.code)
         ? { label: 'Abrir opções', onClick: () => chrome.runtime.sendMessage({ type: 'open-options' }) }
         : undefined;
       ui.toast(fatal.message, { error: true, action });

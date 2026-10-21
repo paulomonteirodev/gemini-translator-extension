@@ -1,10 +1,11 @@
 // Cliente mínimo da API do Gemini (Google AI Studio). A chave é sempre a do usuário.
 const API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 
-export const DEFAULT_MODEL = 'gemini-2.5-flash';
+export const DEFAULT_MODEL = 'gemini-3.8-flash';
 
-// Modelos que não servem para gerar texto (voz, imagem, embeddings etc.).
-const NON_TEXT_MODEL = /(tts|image|embedding|audio|live|robotics|computer-use)/;
+// Só modelos estáveis de texto (ex.: gemini-2.5-flash). Ficam de fora preview, experimental,
+// versões datadas (-001), apelidos (-latest) e modelos de voz, imagem ou embeddings.
+const STABLE_MODEL = /^gemini-(\d+(?:\.\d+)?)-(pro|flash|flash-lite)$/;
 
 export class GeminiError extends Error {
   constructor(message, { code = 'API', retryAfterMs } = {}) {
@@ -33,6 +34,11 @@ function toGeminiError(status, body) {
   const message = body?.error?.message ?? '';
   const details = body?.error?.details ?? [];
 
+  if (status === 429 && /limit: 0\b/.test(message)) {
+    return new GeminiError('Este modelo não tem cota no plano da sua chave. Escolha outro modelo nas opções da extensão.', {
+      code: 'NO_QUOTA',
+    });
+  }
   if (status === 429) {
     // O Gemini informa quanto esperar em RetryInfo.retryDelay (ex.: "34s").
     const retryDelay = details.find((d) => d['@type']?.endsWith('RetryInfo'))?.retryDelay;
@@ -49,11 +55,35 @@ function toGeminiError(status, body) {
     });
   }
   if (status === 404) {
-    return new GeminiError('Modelo não encontrado. Escolha outro modelo nas opções da extensão.', {
+    return new GeminiError('Este modelo não está disponível para a sua chave. Escolha outro modelo nas opções da extensão.', {
       code: 'MODEL_NOT_FOUND',
     });
   }
   return new GeminiError(`Erro da API do Gemini (${status}): ${message || 'erro desconhecido'}`);
+}
+
+// A listagem inclui modelos que a chave não pode usar (ex.: os 2.5 só funcionam para quem já os
+// usava), então cada modelo é testado com uma chamada mínima.
+async function isUsable(apiKey, model) {
+  try {
+    await request(`models/${encodeURIComponent(model)}:generateContent`, apiKey, {
+      method: 'POST',
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: 'ok' }] }],
+        generationConfig: { maxOutputTokens: 16 },
+      }),
+    });
+    return true;
+  } catch (err) {
+    if (err.code === 'NETWORK') throw err;
+    return err.code === 'RATE_LIMIT'; // só ocupado no momento, mas disponível
+  }
+}
+
+export async function listUsableModels(apiKey) {
+  const models = await listModels(apiKey);
+  const usable = await Promise.all(models.map((m) => isUsable(apiKey, m.id)));
+  return models.filter((_, i) => usable[i]);
 }
 
 export async function listModels(apiKey) {
@@ -70,17 +100,16 @@ export async function listModels(apiKey) {
   return models
     .filter((m) => m.supportedGenerationMethods?.includes('generateContent'))
     .map((m) => ({ id: m.name.replace(/^models\//, ''), label: m.displayName }))
-    .filter((m) => m.id.startsWith('gemini') && !NON_TEXT_MODEL.test(m.id));
+    .filter((m) => STABLE_MODEL.test(m.id))
+    // Versões mais novas primeiro.
+    .sort((a, b) => parseFloat(b.id.match(STABLE_MODEL)[1]) - parseFloat(a.id.match(STABLE_MODEL)[1]));
 }
 
 export function pickModel(models, current) {
   const ids = models.map((m) => m.id);
   if (ids.includes(current)) return current;
-  return (
-    [DEFAULT_MODEL, 'gemini-flash-latest'].find((id) => ids.includes(id)) ??
-    ids.find((id) => id.includes('flash') && !id.includes('preview')) ??
-    ids[0]
-  );
+  // A lista vem da versão mais nova para a mais antiga: escolhe o Flash mais recente.
+  return ids.find((id) => id.endsWith('-flash')) ?? ids[0];
 }
 
 function buildInstruction(targetLanguage) {
